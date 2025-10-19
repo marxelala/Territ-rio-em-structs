@@ -56,14 +56,49 @@ void atacar(Territorio *atacante, Territorio *defensor) {
     }
 }
 
-void liberarMemoria(Territorio *mapa) {
+void atribuirMissao(char *destino, char *missoes[], int totalMissoes) {
+    int sorteio = rand() % totalMissoes;
+    strcpy(destino, missoes[sorteio]);
+}
+
+int verificarMissao(char *missao, Territorio *mapa, int tamanho, char *corJogador) {
+    int conquistas = 0;
+    for (int i = 0; i < tamanho; i++) {
+        if (strcmp(mapa[i].cor, corJogador) == 0) conquistas++;
+    }
+
+    if (strstr(missao, "3 territorios") && conquistas >= 3) return 1;
+    if (strstr(missao, "5 territorios") && conquistas >= 5) return 1;
+    if (strstr(missao, "vermelha")) {
+        int existe = 0;
+        for (int i = 0; i < tamanho; i++) {
+            if (strcmp(mapa[i].cor, "vermelha") == 0) existe = 1;
+        }
+        if (!existe) return 1;
+    }
+    return 0;
+}
+
+void liberarMemoria(Territorio *mapa, char *missao1, char *missao2) {
     free(mapa);
+    free(missao1);
+    free(missao2);
 }
 
 int main() {
     srand(time(NULL));
     int qtd, opcao;
     Territorio *mapa;
+    char *missaoJogador1, *missaoJogador2;
+
+    char *missoes[] = {
+        "Conquistar 3 territorios seguidos",
+        "Conquistar 5 territorios",
+        "Eliminar todas as tropas da cor vermelha",
+        "Manter pelo menos 2 territorios com mais de 10 tropas",
+        "Dominar metade do mapa"
+    };
+    int totalMissoes = 5;
 
     printf("Quantos territorios deseja cadastrar? ");
     scanf("%d", &qtd);
@@ -75,6 +110,15 @@ int main() {
     }
 
     cadastrarTerritorios(mapa, qtd);
+
+    missaoJogador1 = (char *)malloc(100 * sizeof(char));
+    missaoJogador2 = (char *)malloc(100 * sizeof(char));
+
+    atribuirMissao(missaoJogador1, missoes, totalMissoes);
+    atribuirMissao(missaoJogador2, missoes, totalMissoes);
+
+    printf("\nMissao do Jogador 1: %s\n", missaoJogador1);
+    printf("Missao do Jogador 2: %s\n", missaoJogador2);
 
     do {
         printf("\n--- Menu WAR ---\n");
@@ -99,6 +143,15 @@ int main() {
             } else {
                 atacar(&mapa[a - 1], &mapa[d - 1]);
                 exibirTerritorios(mapa, qtd);
+
+                if (verificarMissao(missaoJogador1, mapa, qtd, mapa[a - 1].cor)) {
+                    printf("\nJogador 1 cumpriu sua missao e venceu o jogo!\n");
+                    break;
+                }
+                if (verificarMissao(missaoJogador2, mapa, qtd, mapa[d - 1].cor)) {
+                    printf("\nJogador 2 cumpriu sua missao e venceu o jogo!\n");
+                    break;
+                }
             }
         }
         else if (opcao == 0) {
@@ -110,6 +163,6 @@ int main() {
 
     } while (opcao != 0);
 
-    liberarMemoria(mapa);
+    liberarMemoria(mapa, missaoJogador1, missaoJogador2);
     return 0;
 }
